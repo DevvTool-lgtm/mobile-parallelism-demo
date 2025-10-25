@@ -8,21 +8,19 @@ import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import GlassCard from '@/components/GlassCard';
 import ScannerView from '@/components/ScannerView';
-import { pushUnique, getJSON } from '@/utils/storage';
+import { getRecentAttendance, recordAttendance } from '@/utils/supabase';
 
 type AttendanceRecord = {
   id: string;
   time: number;
 };
 
-const STORAGE_KEY = 'attendance:records';
-
 export default function AttendanceScreen() {
   const [last, setLast] = React.useState<AttendanceRecord | null>(null);
   const [recent, setRecent] = React.useState<AttendanceRecord[]>([]);
 
   const refresh = React.useCallback(async () => {
-    const list = await getJSON<AttendanceRecord[]>(STORAGE_KEY, []);
+    const list = await getRecentAttendance(20);
     setRecent(list);
   }, []);
 
@@ -32,7 +30,7 @@ export default function AttendanceScreen() {
 
   const onScanned = async (id: string) => {
     const record: AttendanceRecord = { id, time: Date.now() };
-    await pushUnique<AttendanceRecord>(STORAGE_KEY, record);
+    await recordAttendance(id);
     setLast(record);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     refresh();

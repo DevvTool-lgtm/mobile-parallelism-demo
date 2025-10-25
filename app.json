@@ -37,6 +37,16 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "supabaseUrl": "",
+      "supabaseAnonKey": "",
+      "adminEmails": [],
+      "brand": {
+        "name": "Your Brand",
+        "primary": "",
+        "accent": ""
+      }
     }
   }
 }

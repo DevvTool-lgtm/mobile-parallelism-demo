@@ -16,6 +16,67 @@ The installer will:
 - Optionally run `expo prebuild`
 - Optionally start the dev server
 
+## Backend setup (Supabase)
+
+Cloud features (attendance sync, voting sync, admin exports, email OTP sign-in) use Supabase. If you skip this, everything still works offline with local storage.
+
+1) Create a Supabase project at https://supabase.com and copy:
+- Project URL
+- anon public key
+
+2) In app.json, fill extra.supabaseUrl and extra.supabaseAnonKey:
+```json
+{
+  "expo": {
+    "extra": {
+      "supabaseUrl": "https://YOUR_PROJECT.supabase.co",
+      "supabaseAnonKey": "YOUR_PUBLIC_ANON_KEY",
+      "adminEmails": ["admin@example.com"] // optional whitelist
+    }
+  }
+}
+```
+
+3) In Supabase SQL editor, run:
+```sql
+-- scripts/supabase.sql
+```
+You can paste the contents of [scripts/supabase.sql](./scripts/supabase.sql).
+
+4) Start the app:
+```bash
+npx expo start
+```
+
+## Branding
+
+In app.json extra.brand you can set your brand name and primary color which will override the app tint:
+```json
+{
+  "expo": {
+    "extra": {
+      "brand": {
+        "name": "Your Brand",
+        "primary": "#0a7ea4",
+        "accent": "#22d3ee"
+      }
+    }
+  }
+}
+```
+
+## Features
+
+- Animated, modern UI (glassmorphism, parallax headers, Lottie hero, custom tab bar)
+- Theming with mode (System/Light/Dark) and presets (Default/AMOLED/High Contrast)
+- Onboarding with persistence
+- Attendance scanning (camera with barcode/QR; web fallback text input)
+- Voting with ID verification and duplicate prevention (device-local and/or Supabase)
+- Admin dashboard:
+  - Email OTP sign-in (Supabase)
+  - Optional admin email whitelist (app.json extra.adminEmails)
+  - Export attendance and votes to CSV (web download or native share)
+
 ## Get started (manual)
 
 1. Install dependencies

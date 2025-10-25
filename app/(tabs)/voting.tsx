@@ -8,22 +8,12 @@ import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import GlassCard from '@/components/GlassCard';
 import ScannerView from '@/components/ScannerView';
-import { getJSON, setJSON } from '@/utils/storage';
-import { simpleHash } from '@/utils/hash';
+import { getPollResults, submitVote } from '@/utils/supabase';
 
 type Poll = {
   id: string;
   question: string;
   options: string[];
-};
-
-type Votes = {
-  [optionIndex: number]: number;
-};
-
-type PollState = {
-  votes: Votes;
-  voters: Record<string, true>; // hashedId -> true
 };
 
 const POLL: Poll = {
@@ -32,17 +22,15 @@ const POLL: Poll = {
   options: ['Default', 'AMOLED', 'High Contrast'],
 };
 
-const STORAGE_KEY = (pollId: string) => `voting:${pollId}`;
-
 export default function VotingScreen() {
-  const [state, setState] = React.useState<PollState>({ votes: {}, voters: {} });
+  const [votes, setVotes] = React.useState<{ [idx: number]: number }>({});
   const [modalVisible, setModalVisible] = React.useState(false);
   const [pendingOption, setPendingOption] = React.useState<number | null>(null);
   const [message, setMessage] = React.useState<string | null>(null);
 
   const load = React.useCallback(async () => {
-    const data = await getJSON<PollState>(STORAGE_KEY(POLL.id), { votes: {}, voters: {} });
-    setState(data);
+    const data = await getPollResults(POLL.id);
+    setVotes(data || {});
   }, []);
 
   React.useEffect(() => {
@@ -57,30 +45,23 @@ export default function VotingScreen() {
   const onScanned = async (idRaw: string) => {
     setModalVisible(false);
 
-    const hashed = simpleHash(idRaw);
-    const already = state.voters[hashed];
-    if (already) {
-      setMessage('You have already voted in this poll.');
+    if (pendingOption == null) return;
+
+    const res = await submitVote(POLL.id, pendingOption, idRaw);
+    if (!res.ok) {
+      setMessage(res.message || 'Unable to submit vote.');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
 
-    if (pendingOption == null) return;
-
-    const next: PollState = {
-      votes: { ...state.votes, [pendingOption]: (state.votes[pendingOption] || 0) + 1 },
-      voters: { ...state.voters, [hashed]: true },
-    };
-
-    await setJSON(STORAGE_KEY(POLL.id), next);
-    setState(next);
     setPendingOption(null);
     setMessage('Vote submitted. Thank you!');
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    await load();
     setTimeout(() => setMessage(null), 2500);
   };
 
-  const total = Object.values(state.votes).reduce((a, b) => a + b, 0) || 0;
+  const total = Object.values(votes).reduce((a, b) => a + b, 0) || 0;
 
   return (
     <AnimatedGradientBackground intensity={0.9}>
@@ -95,7 +76,7 @@ export default function VotingScreen() {
             <View style={{ height: 12 }} />
             <View style={{ gap: 10 }}>
               {POLL.options.map((opt, i) => {
-                const count = state.votes[i] || 0;
+                const count = votes[i] || 0;
                 const pct = total > 0 ? Math.round((count / total) * 100) : 0;
                 return (
                   <GlassCard key={i} style={styles.optionCard} onPress={() => openScanner(i)}>

@@ -6,6 +6,7 @@
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useThemeMode } from '@/providers/ThemeProvider';
+import Constants from 'expo-constants';
 
 export function useThemeColor(
   props: { light?: string; dark?: string },
@@ -19,7 +20,14 @@ export function useThemeColor(
     return colorFromProps;
   }
 
-  const base = Colors[theme][colorName];
+  // Base palette
+  let result = Colors[theme][colorName] as string;
+
+  // Brand overrides (from app.json extra.brand)
+  const brand = (Constants.expoConfig as any)?.extra?.brand || {};
+  if (colorName === 'tint' && typeof brand.primary === 'string' && brand.primary.trim()) {
+    result = brand.primary;
+  }
 
   // Preset overrides
   if (preset === 'amoled' && theme === 'dark') {
@@ -40,5 +48,5 @@ export function useThemeColor(
     }
   }
 
-  return base;
+  return result;
 }
