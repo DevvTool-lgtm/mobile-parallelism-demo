@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Pressable, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
@@ -9,7 +10,8 @@ import AnimatedGradientBackground from '@/components/AnimatedGradientBackground'
 import { useThemeMode } from '@/providers/ThemeProvider';
 
 export default function SettingsScreen() {
-  const { mode, setMode, effectiveScheme } = useThemeMode();
+  const { mode, setMode, effectiveScheme, preset, setPreset } = useThemeMode();
+  const [message, setMessage] = React.useState<string | null>(null);
 
   const Option = ({ value, label }: { value: 'system' | 'light' | 'dark'; label: string }) => {
     const selected = mode === value;
@@ -21,6 +23,24 @@ export default function SettingsScreen() {
         <ThemedText type="defaultSemiBold">{label}</ThemedText>
       </Pressable>
     );
+  };
+
+  const PresetOption = ({ value, label }: { value: 'default' | 'amoled' | 'highContrast'; label: string }) => {
+    const selected = preset === value;
+    return (
+      <Pressable
+        onPress={() => setPreset(value)}
+        style={[styles.option, selected && styles.optionSelected]}
+      >
+        <ThemedText type="defaultSemiBold">{label}</ThemedText>
+      </Pressable>
+    );
+  };
+
+  const resetOnboarding = async () => {
+    await AsyncStorage.removeItem('onboarded');
+    setMessage('Onboarding has been reset. It will show on next app start.');
+    setTimeout(() => setMessage(null), 3000);
   };
 
   return (
@@ -47,6 +67,17 @@ export default function SettingsScreen() {
           </GlassCard>
         </Animated.View>
 
+        <Animated.View entering={FadeInDown.delay(190).springify()}>
+          <GlassCard>
+            <ThemedText type="subtitle">Theme preset</ThemedText>
+            <View style={styles.row}>
+              <PresetOption value="default" label="Default" />
+              <PresetOption value="amoled" label="AMOLED" />
+              <PresetOption value="highContrast" label="High Contrast" />
+            </View>
+          </GlassCard>
+        </Animated.View>
+
         <Animated.View entering={FadeInDown.delay(220).springify()}>
           <GlassCard>
             <ThemedText type="subtitle">About</ThemedText>
@@ -54,6 +85,16 @@ export default function SettingsScreen() {
               This app uses Expo Router with a modern, animated UI. Explore tabs to see parallax
               headers and animated content.
             </ThemedText>
+            <View style={{ height: 12 }} />
+            <Pressable onPress={resetOnboarding} style={styles.btn}>
+              <ThemedText type="defaultSemiBold">Reset onboarding</ThemedText>
+            </Pressable>
+            {message ? (
+              <>
+                <View style={{ height: 8 }} />
+                <ThemedText>{message}</ThemedText>
+              </>
+            ) : null}
           </GlassCard>
         </Animated.View>
       </ThemedView>
@@ -87,5 +128,15 @@ const styles = StyleSheet.create({
   optionSelected: {
     borderColor: 'rgba(127,127,127,0.7)',
     backgroundColor: 'rgba(127,127,127,0.12)',
+  },
+  btn: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(127,127,127,0.35)',
+    backgroundColor: 'rgba(127,127,127,0.12)',
+    alignSelf: 'flex-start',
   },
 });

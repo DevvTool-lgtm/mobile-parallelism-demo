@@ -8,6 +8,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import AnimatedGradientBackground from '@/components/AnimatedGradientBackground';
 import GlassCard from '@/components/GlassCard';
+import HeroLottie from '@/components/HeroLottie';
 
 export default function HomeScreen() {
   return (
@@ -15,10 +16,7 @@ export default function HomeScreen() {
       <ParallaxScrollView
         headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
         headerImage={
-          <Image
-            source={require('@/assets/images/partial-react-logo.png')}
-            style={styles.reactLogo}
-          />
+          <HeroLottie style={styles.lottieHero} />
         }>
         <Animated.View entering={FadeInDown.delay(100).springify()}>
           <ThemedView style={styles.titleContainer}>
@@ -79,11 +77,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
+  lottieHero: {
     position: 'absolute',
+    bottom: -30,
+    left: -20,
   },
 });
