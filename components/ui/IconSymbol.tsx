@@ -19,6 +19,8 @@ const MAPPING = {
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-right',
   'gearshape.fill': 'settings',
+  'qrcode.viewfinder': 'qr-code-scanner',
+  'checkmark.seal.fill': 'how-to-vote',
 } as IconMapping;
 
 /**

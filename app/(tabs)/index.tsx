@@ -1,6 +1,7 @@
 import { Image } from 'expo-image';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View, Pressable } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { router } from 'expo-router';
 
 import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
@@ -27,7 +28,29 @@ export default function HomeScreen() {
 
         <Animated.View entering={FadeInDown.delay(200).springify()}>
           <GlassCard>
-            <ThemedText type="subtitle">Step 1: Try it</ThemedText>
+            <ThemedText type="subtitle">Scan IDs for attendance</ThemedText>
+            <ThemedText>Use your device camera to scan ID barcodes or QR codes.</ThemedText>
+            <View style={{ height: 8 }} />
+            <Pressable onPress={() => router.push('/(tabs)/attendance')} style={styles.btn}>
+              <ThemedText type="defaultSemiBold">Open Scanner</ThemedText>
+            </Pressable>
+          </GlassCard>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(250).springify()}>
+          <GlassCard>
+            <ThemedText type="subtitle">Vote with ID verification</ThemedText>
+            <ThemedText>Secure one-person-one-vote using ID scan verification.</ThemedText>
+            <View style={{ height: 8 }} />
+            <Pressable onPress={() => router.push('/(tabs)/voting')} style={styles.btn}>
+              <ThemedText type="defaultSemiBold">Open Voting</ThemedText>
+            </Pressable>
+          </GlassCard>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(320).springify()}>
+          <GlassCard>
+            <ThemedText type="subtitle">Developer Tips</ThemedText>
             <ThemedText>
               Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see
               changes. Press{' '}
@@ -39,28 +62,6 @@ export default function HomeScreen() {
                 })}
               </ThemedText>{' '}
               to open developer tools.
-            </ThemedText>
-          </GlassCard>
-        </Animated.View>
-
-        <Animated.View entering={FadeInDown.delay(300).springify()}>
-          <GlassCard>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-            <ThemedText>
-              {`Tap the Explore tab to learn more about what's included in this starter app.`}
-            </ThemedText>
-          </GlassCard>
-        </Animated.View>
-
-        <Animated.View entering={FadeInDown.delay(400).springify()}>
-          <GlassCard>
-            <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-            <ThemedText>
-              {`When you're ready, run `}
-              <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-              <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the
-              current <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-              <ThemedText type="defaultSemiBold">app-example</ThemedText>.
             </ThemedText>
           </GlassCard>
         </Animated.View>
@@ -81,5 +82,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: -30,
     left: -20,
+  },
+  btn: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(127,127,127,0.35)',
+    backgroundColor: 'rgba(127,127,127,0.12)',
+    alignSelf: 'flex-start',
   },
 });
