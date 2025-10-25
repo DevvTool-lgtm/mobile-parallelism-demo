@@ -2,7 +2,21 @@
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
-## Get started
+## Quick install
+
+Run the guided installer to set up everything automatically:
+
+```bash
+npm run setup
+```
+
+The installer will:
+- Verify your environment (Node, npm, Expo CLI)
+- Install dependencies
+- Optionally run `expo prebuild`
+- Optionally start the dev server
+
+## Get started (manual)
 
 1. Install dependencies
 
