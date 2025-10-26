@@ -110,6 +110,22 @@ In the output, you'll find options to open the app in a
 
 You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
 
+### Web preview and 404 fix
+
+If your hosting preview shows “404 Not Found” (common for SPAs), use one of these:
+
+- Dev server (recommended):
+  ```bash
+  npm run web
+  ```
+  This starts the Expo web dev server with proper routing.
+
+- Static export + local preview (single page fallback enabled):
+  ```bash
+  npm run preview:web
+  ```
+  This will export to dist/ and serve it on http://localhost:5000 with a SPA fallback, avoiding 404s on deep links.
+
 ## Get a fresh project
 
 When you're ready, run:

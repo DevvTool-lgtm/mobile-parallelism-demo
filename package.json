@@ -10,6 +10,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "export:web": "expo export --platform web",
+    "preview:web": "expo export --platform web && npx serve -s dist -l 5000",
     "lint": "expo lint"
   },
   "dependencies": {

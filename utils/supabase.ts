@@ -131,6 +131,12 @@ export async function isUserAdmin(): Promise<boolean> {
       return data.role === 'admin';
     }
   } catch {}
+  // Fallback to optional app.json whitelist
+  try {
+    const extra = (Constants.expoConfig as any)?.extra ?? {};
+    const admins = (extra.adminEmails as string[]) || [];
+    if (Array.isArray(admins) && admins.includes(email)) return true;
+  } catch {}
   return false;
 }
 

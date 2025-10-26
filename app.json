@@ -45,7 +45,8 @@
       "brand": {
         "name": "Your Brand",
         "primary": "",
-        "accent": ""
+        "accent": "",
+        "logoUrl": ""
       }
     }
   }

@@ -92,6 +92,14 @@ export default function AdminScreen() {
     refreshData();
   }, [refreshAuth, refreshData]);
 
+  // Live refresh charts/data every 5s
+  React.useEffect(() => {
+    const t = setInterval(() => {
+      refreshData();
+    }, 5000);
+    return () => clearInterval(t);
+  }, [refreshData]);
+
   const handleSignIn = async () => {
     const res = await signIn(email.trim());
     setMsg(res.ok ? 'Check your email for the OTP code.' : res.message || 'Failed to send OTP.');
