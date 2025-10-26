@@ -75,6 +75,19 @@ const checkBinary = (name, args = ['--version']) => {
     }
   }
 
+  // Offer to export static web build (for preview/deploy)
+  let doExport = await ask('🧱 Export static web build now for preview/deploy? (Y/n): ');
+  doExport = doExport === '' || doExport === 'y';
+  if (doExport) {
+    console.log('\n🏁 Exporting static web build to dist/ ...');
+    try {
+      run('npx expo export --platform web');
+      console.log('✅ Export complete. Output in dist/');
+    } catch (e) {
+      console.warn('⚠️  Export failed. You can run it later with "npx expo export --platform web".');
+    }
+  }
+
   // Offer to start the dev server
   let doStart = await ask('▶️  Start the development server now? (Y/n): ');
   doStart = doStart === '' || doStart === 'y';
@@ -90,7 +103,7 @@ const checkBinary = (name, args = ['--version']) => {
     });
   } else {
     rl.close();
-    console.log('\n✅ Setup complete.\n• Run "npx expo start" to begin.\n');
+    console.log('\n✅ Setup complete.\n• Run "npx expo start" to begin.\n• Run "npx expo export --platform web" to build static site into dist/.\n');
   }
 })().catch((err) => {
   rl.close();
