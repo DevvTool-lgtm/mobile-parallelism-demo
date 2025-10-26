@@ -12,7 +12,8 @@
     "web": "expo start --web",
     "export:web": "expo export --platform web",
     "preview:web": "expo export --platform web && npx serve -s dist -l 5000",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "postinstall": "expo export --platform web"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
