@@ -1,0 +1,9 @@
+# Single Page App fallback for Expo web export
+RewriteEngine On
+RewriteBase /
+# serve existing files directly
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+# otherwise route everything to index.html
+RewriteRule . /index.html [L]

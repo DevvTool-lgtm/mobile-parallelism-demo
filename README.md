@@ -126,6 +126,34 @@ If your hosting preview shows “404 Not Found” (common for SPAs), use one of 
   ```
   This will export to dist/ and serve it on http://localhost:5000 with a SPA fallback, avoiding 404s on deep links.
 
+### Deploy to Freehosting.com (FTP)
+
+This project includes a GitHub Actions workflow to build and deploy the static export to Freehosting via FTP, and includes an `.htaccess` SPA fallback.
+
+1) Add repository secrets (GitHub → Settings → Secrets and variables → Actions):
+   - `FTP_SERVER` (e.g., ftp.freehosting.com)
+   - `FTP_USERNAME`
+   - `FTP_PASSWORD`
+   - `FTP_PORT` (optional, default 21)
+   - `FTP_DIR` (e.g., `/public_html/` or your web root)
+   - `SUPABASE_URL` (e.g., https://asms.supabase.co)
+   - `SUPABASE_ANON_KEY`
+   - Optional branding: `BRAND_NAME`, `BRAND_PRIMARY`, `BRAND_ACCENT`, `BRAND_LOGO_URL`
+   - Optional: `ADMIN_EMAILS` (comma-separated)
+
+2) Ensure you have run Supabase SQL in your project (use scripts/supabase.sql).
+
+3) Trigger the workflow:
+   - GitHub → Actions → “Deploy to Freehosting” → Run workflow
+   - Or push to main to auto-deploy
+
+Manual FTP (alternative):
+- Build locally:
+  ```bash
+  npm run build
+  ```
+  Then upload the contents of `dist/` plus the `.htaccess` file to your Freehosting web root (e.g., public_html). The `.htaccess` enables correct SPA routing.
+
 ## Get a fresh project
 
 When you're ready, run:
