@@ -92,12 +92,13 @@ export async function getPollResults(pollId: string): Promise<{ [optionIndex: nu
     try {
       const { data, error } = await supa
         .from('vote_records')
-        .select('option, count:option')
-        .group('option');
+        .select('option')
+        .eq('poll_id', pollId);
       if (!error && data) {
         const map: { [idx: number]: number } = {};
         for (const row of data as any[]) {
-          map[row.option] = Number(row.count);
+          const idx = Number(row.option);
+          map[idx] = (map[idx] || 0) + 1;
         }
         return map;
       }
