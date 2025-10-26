@@ -31,17 +31,27 @@ Cloud features (attendance sync, voting sync, admin exports, email OTP sign-in) 
     "extra": {
       "supabaseUrl": "https://YOUR_PROJECT.supabase.co",
       "supabaseAnonKey": "YOUR_PUBLIC_ANON_KEY",
-      "adminEmails": ["admin@example.com"] // optional whitelist
+      "brand": {
+        "name": "Your Brand",
+        "primary": "#0a7ea4",
+        "accent": "#22d3ee",
+        "logoUrl": "https://your.cdn/logo.png"
+      }
     }
   }
 }
 ```
 
-3) In Supabase SQL editor, run:
+3) In Supabase SQL editor, run the schema and restrictive RLS policies:
 ```sql
 -- scripts/supabase.sql
 ```
 You can paste the contents of [scripts/supabase.sql](./scripts/supabase.sql).
+
+Notes:
+- Attendance and votes are write-restricted to authenticated users (RLS).
+- Profiles table manages admin roles (email, role).
+- Bootstrap: The first authenticated user can upsert their own profile as admin once (if no admin exists). After that, only admins can manage roles.
 
 4) Start the app:
 ```bash

@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 import { Platform, StyleSheet, View, Pressable } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { router } from 'expo-router';
+import Constants from 'expo-constants';
 
 import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
@@ -12,13 +13,18 @@ import GlassCard from '@/components/GlassCard';
 import HeroLottie from '@/components/HeroLottie';
 
 export default function HomeScreen() {
+  const brand = (Constants.expoConfig as any)?.extra?.brand || {};
+  const headerImage = brand.logoUrl ? (
+    <Image source={{ uri: brand.logoUrl }} style={styles.brandLogo} contentFit="contain" />
+  ) : (
+    <HeroLottie style={styles.lottieHero} />
+  );
+
   return (
     <AnimatedGradientBackground intensity={1}>
       <ParallaxScrollView
         headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-        headerImage={
-          <HeroLottie style={styles.lottieHero} />
-        }>
+        headerImage={headerImage}>
         <Animated.View entering={FadeInDown.delay(100).springify()}>
           <ThemedView style={styles.titleContainer}>
             <ThemedText type="title">Welcome!</ThemedText>
@@ -82,6 +88,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: -30,
     left: -20,
+  },
+  brandLogo: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    width: 260,
+    height: 120,
   },
   btn: {
     paddingVertical: 10,

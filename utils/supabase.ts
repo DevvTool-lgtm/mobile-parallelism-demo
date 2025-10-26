@@ -109,9 +109,53 @@ export async function getPollResults(pollId: string): Promise<{ [optionIndex: nu
   return state.votes;
 }
 
-export function getAdminEmails(): string[] {
-  const extra = (Constants.expoConfig as any)?.extra ?? {};
-  return (extra.adminEmails as string[]) || [];
+export async function getCurrentUserEmail(): Promise<string | null> {
+  const supa = getSupabase();
+  if (!supa) return null;
+  try {
+    const { data } = await supa.auth.getUser();
+    return data.user?.email ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function isUserAdmin(): Promise<boolean> {
+  const supa = getSupabase();
+  if (!supa) return false;
+  const email = await getCurrentUserEmail();
+  if (!email) return false;
+  try {
+    const { data, error } = await supa.from('profiles').select('role').eq('email', email).maybeSingle();
+    if (!error && data) {
+      return data.role === 'admin';
+    }
+  } catch {}
+  return false;
+}
+
+export async function listProfiles(): Promise<{ email: string; role: 'user' | 'admin' }[]> {
+  const supa = getSupabase();
+  if (!supa) return [];
+  try {
+    const { data, error } = await supa.from('profiles').select('email,role').order('email', { ascending: true });
+    if (!error && data) {
+      return data as any;
+    }
+  } catch {}
+  return [];
+}
+
+export async function setProfileRole(email: string, role: 'user' | 'admin'): Promise<{ ok: boolean; message?: string }> {
+  const supa = getSupabase();
+  if (!supa) return { ok: false, message: 'Backend not configured' };
+  try {
+    const { error } = await supa.from('profiles').upsert({ email: email.toLowerCase(), role });
+    if (error) return { ok: false, message: error.message };
+    return { ok: true };
+  } catch (e: any) {
+    return { ok: false, message: e?.message || 'Failed to update role' };
+  }
 }
 
 export function getBrand() {

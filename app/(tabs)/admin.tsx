@@ -8,8 +8,16 @@ import AnimatedGradientBackground from '@/components/AnimatedGradientBackground'
 import GlassCard from '@/components/GlassCard';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { getAdminEmails, getPollResults, getRecentAttendance, getSupabase, isSupabaseConfigured } from '@/utils/supabase';
-import { IconSymbol } from '@/components/ui/IconSymbol';
+import {
+  getPollResults,
+  getRecentAttendance,
+  getSupabase,
+  isSupabaseConfigured,
+  isUserAdmin,
+  listProfiles,
+  setProfileRole,
+} from '@/utils/supabase';
+import LiveBarChart from '@/components/LiveBarChart';
 
 function useAuth() {
   const supa = getSupabase();
@@ -18,7 +26,7 @@ function useAuth() {
   const signIn = async (address: string) => {
     if (!supa) return { ok: false, message: 'Backend not configured' };
     setEmail(address);
-    const { error } = await supa.auth.signInWithOtp({ email: address, options: { shouldCreateUser: false } });
+    const { error } = await supa.auth.signInWithOtp({ email: address, options: { shouldCreateUser: true } });
     if (error) return { ok: false, message: error.message };
     return { ok: true };
   };
@@ -38,47 +46,51 @@ function useAuth() {
     setEmail(null);
   };
 
-  const getUserEmail = async () => {
-    const supa = getSupabase();
-    if (!supa) return null;
-    const { data } = await supa.auth.getUser();
-    return data.user?.email ?? null;
-  };
-
-  return { signIn, verify, signOut, getUserEmail };
+  return { signIn, verify, signOut };
 }
 
 export default function AdminScreen() {
   const configured = isSupabaseConfigured();
-  const { signIn, verify, signOut, getUserEmail } = useAuth();
+  const { signIn, verify, signOut } = useAuth();
 
   const [email, setEmail] = React.useState('');
   const [code, setCode] = React.useState('');
-  const [signedInEmail, setSignedInEmail] = React.useState<string | null>(null);
+  const [signedIn, setSignedIn] = React.useState<boolean>(false);
+  const [allowed, setAllowed] = React.useState<boolean>(false);
   const [msg, setMsg] = React.useState<string | null>(null);
 
   const [attendance, setAttendance] = React.useState<{ id: string; time: number }[]>([]);
   const [votes, setVotes] = React.useState<{ [idx: number]: number }>({});
+  const [profiles, setProfiles] = React.useState<{ email: string; role: 'user' | 'admin' }[]>([]);
+  const [roleEmail, setRoleEmail] = React.useState('');
+  const [roleValue, setRoleValue] = React.useState<'user' | 'admin'>('user');
 
-  const allowed = React.useMemo(() => {
-    if (!signedInEmail) return false;
-    const admins = getAdminEmails();
-    if (!admins || !admins.length) return true; // if no whitelist set, allow any signed-in user
-    return admins.includes(signedInEmail);
-  }, [signedInEmail]);
-
-  const refresh = React.useCallback(async () => {
+  const refreshData = React.useCallback(async () => {
     if (!configured) return;
-    const userEmail = await getUserEmail();
-    setSignedInEmail(userEmail);
-    if (!userEmail) return;
     setAttendance(await getRecentAttendance(1000));
     setVotes(await getPollResults('poll-2025-01'));
+    setProfiles(await listProfiles());
+  }, [configured]);
+
+  const refreshAuth = React.useCallback(async () => {
+    if (!configured) return;
+    try {
+      const supa = getSupabase();
+      if (!supa) return;
+      const { data } = await supa.auth.getUser();
+      const hasUser = !!data.user;
+      setSignedIn(hasUser);
+      setAllowed(hasUser ? await isUserAdmin() : false);
+    } catch {
+      setSignedIn(false);
+      setAllowed(false);
+    }
   }, [configured]);
 
   React.useEffect(() => {
-    refresh();
-  }, [refresh]);
+    refreshAuth();
+    refreshData();
+  }, [refreshAuth, refreshData]);
 
   const handleSignIn = async () => {
     const res = await signIn(email.trim());
@@ -89,19 +101,18 @@ export default function AdminScreen() {
     const res = await verify(email.trim(), code.trim());
     if (res.ok) {
       setMsg('Signed in.');
-      await refresh();
+      await refreshAuth();
+      await refreshData();
     } else {
       setMsg(res.message || 'Verification failed.');
     }
   };
 
   const exportCSV = async () => {
-    // Attendance CSV
     const attendanceCSV = ['id,time', ...attendance.map(r => `${JSON.stringify(r.id)},${new Date(r.time).toISOString()}`)].join('\n');
     const votesCSV = ['option,count', ...Object.entries(votes).map(([k,v]) => `${k},${v}`)].join('\n');
 
     if (Platform.OS === 'web') {
-      // create download links
       const linkA = document.createElement('a');
       linkA.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(attendanceCSV);
       linkA.download = 'attendance.csv';
@@ -130,6 +141,27 @@ export default function AdminScreen() {
     }
   };
 
+  // Aggregations for charts
+  const voteLabels = ['0', '1', '2'];
+  const voteValues = voteLabels.map((_, i) => votes[i] || 0);
+
+  const days = 7;
+  const now = Date.now();
+  const dayMillis = 24 * 3600 * 1000;
+  const attendanceBuckets = Array.from({ length: days }, (_, i) => {
+    const start = new Date(now - (days - 1 - i) * dayMillis);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start.getTime() + dayMillis);
+    const count = attendance.filter(a => a.time >= start.getTime() && a.time < end.getTime()).length;
+    return { label: `${start.getMonth() + 1}/${start.getDate()}`, count };
+  });
+
+  const handleRoleUpdate = async () => {
+    const res = await setProfileRole(roleEmail.trim().toLowerCase(), roleValue);
+    setMsg(res.ok ? 'Role updated.' : res.message || 'Failed to update role.');
+    await refreshData();
+  };
+
   return (
     <AnimatedGradientBackground intensity={0.9}>
       <ThemedView style={styles.container}>
@@ -141,7 +173,7 @@ export default function AdminScreen() {
           <GlassCard>
             <ThemedText>Backend is not configured. Add Supabase URL and anon key in app.json extra.</ThemedText>
           </GlassCard>
-        ) : !signedInEmail ? (
+        ) : !signedIn ? (
           <>
             <GlassCard>
               <ThemedText type="subtitle">Sign in</ThemedText>
@@ -188,6 +220,24 @@ export default function AdminScreen() {
           </GlassCard>
         ) : (
           <>
+            <Animated.View entering={FadeInDown.delay(130).springify()}>
+              <GlassCard>
+                <ThemedText type="subtitle">Live dashboard</ThemedText>
+                <View style={{ height: 8 }} />
+                <LiveBarChart
+                  title="Votes (by option)"
+                  labels={voteLabels}
+                  values={voteValues}
+                />
+                <View style={{ height: 16 }} />
+                <LiveBarChart
+                  title="Attendance (last 7 days)"
+                  labels={attendanceBuckets.map(b => b.label)}
+                  values={attendanceBuckets.map(b => b.count)}
+                />
+              </GlassCard>
+            </Animated.View>
+
             <Animated.View entering={FadeInDown.delay(150).springify()}>
               <GlassCard>
                 <ThemedText type="subtitle">Exports</ThemedText>
@@ -202,6 +252,49 @@ export default function AdminScreen() {
                     <ThemedText>{msg}</ThemedText>
                   </>
                 ) : null}
+              </GlassCard>
+            </Animated.View>
+
+            <Animated.View entering={FadeInDown.delay(180).springify()}>
+              <GlassCard>
+                <ThemedText type="subtitle">Role management</ThemedText>
+                <ThemedText>Assign admin role by email. Only admins can modify roles.</ThemedText>
+                <View style={{ height: 8 }} />
+                <TextInput
+                  placeholder="user@example.com"
+                  value={roleEmail}
+                  onChangeText={setRoleEmail}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  style={styles.input}
+                />
+                <View style={{ height: 8 }} />
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <Pressable onPress={() => setRoleValue('user')} style={[styles.btn, roleValue === 'user' && styles.btnActive]}>
+                    <ThemedText type="defaultSemiBold">User</ThemedText>
+                  </Pressable>
+                  <Pressable onPress={() => setRoleValue('admin')} style={[styles.btn, roleValue === 'admin' && styles.btnActive]}>
+                    <ThemedText type="defaultSemiBold">Admin</ThemedText>
+                  </Pressable>
+                </View>
+                <View style={{ height: 8 }} />
+                <Pressable onPress={handleRoleUpdate} style={styles.btn}>
+                  <ThemedText type="defaultSemiBold">Upsert role</ThemedText>
+                </Pressable>
+
+                <View style={{ height: 12 }} />
+                <ThemedText type="subtitle">Profiles</ThemedText>
+                <View style={{ height: 6 }} />
+                {profiles.length === 0 ? (
+                  <ThemedText>No profiles found.</ThemedText>
+                ) : (
+                  profiles.map((p) => (
+                    <View key={p.email} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                      <ThemedText>{p.email}</ThemedText>
+                      <ThemedText type="defaultSemiBold">{p.role.toUpperCase()}</ThemedText>
+                    </View>
+                  ))
+                )}
               </GlassCard>
             </Animated.View>
           </>
@@ -228,5 +321,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(127,127,127,0.35)',
     backgroundColor: 'rgba(127,127,127,0.12)',
     alignSelf: 'flex-start',
+  },
+  btnActive: {
+    backgroundColor: 'rgba(10, 126, 164, 0.2)',
   },
 });
