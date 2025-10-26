@@ -37,6 +37,17 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "supabaseUrl": "https://asms.supabase.co",
+      "supabaseAnonKey": "sb_publishable_gB2QLA3rzC59r6GLdiSgIA_OmmM2r95",
+      "adminEmails": [],
+      "brand": {
+        "name": "Your Brand",
+        "primary": "",
+        "accent": "",
+        "logoUrl": ""
+      }
     }
   }
 }

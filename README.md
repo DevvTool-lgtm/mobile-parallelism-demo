@@ -2,7 +2,92 @@
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
-## Get started
+## Quick install
+
+Run the guided installer to set up everything automatically:
+
+```bash
+npm run setup
+```
+
+The installer will:
+- Verify your environment (Node, npm, Expo CLI)
+- Install dependencies
+- Optionally run `expo prebuild`
+- Optionally start the dev server
+
+## Backend setup (Supabase)
+
+Cloud features (attendance sync, voting sync, admin exports, email OTP sign-in) use Supabase. If you skip this, everything still works offline with local storage.
+
+1) Create a Supabase project at https://supabase.com and copy:
+- Project URL
+- anon public key
+
+2) In app.json, fill extra.supabaseUrl and extra.supabaseAnonKey:
+```json
+{
+  "expo": {
+    "extra": {
+      "supabaseUrl": "https://YOUR_PROJECT.supabase.co",
+      "supabaseAnonKey": "YOUR_PUBLIC_ANON_KEY",
+      "brand": {
+        "name": "Your Brand",
+        "primary": "#0a7ea4",
+        "accent": "#22d3ee",
+        "logoUrl": "https://your.cdn/logo.png"
+      }
+    }
+  }
+}
+```
+
+3) In Supabase SQL editor, run the schema and restrictive RLS policies:
+```sql
+-- scripts/supabase.sql
+```
+You can paste the contents of [scripts/supabase.sql](./scripts/supabase.sql).
+
+Notes:
+- Attendance and votes are write-restricted to authenticated users (RLS).
+- Profiles table manages admin roles (email, role).
+- Bootstrap: The first authenticated user can upsert their own profile as admin once (if no admin exists). After that, only admins can manage roles.
+
+4) Start the app:
+```bash
+npx expo start
+```
+
+## Branding
+
+In app.json extra.brand you can set your brand name and primary color which will override the app tint:
+```json
+{
+  "expo": {
+    "extra": {
+      "brand": {
+        "name": "Your Brand",
+        "primary": "#0a7ea4",
+        "accent": "#22d3ee"
+      }
+    }
+  }
+}
+```
+
+## Features
+
+- Animated, modern UI (glassmorphism, parallax headers, Lottie hero, custom tab bar)
+- Theming with mode (System/Light/Dark) and presets (Default/AMOLED/High Contrast)
+- Onboarding with persistence
+- Attendance scanning (camera with barcode/QR; web fallback text input)
+- Voting with ID verification and duplicate prevention (device-local and/or Supabase)
+- Admin dashboard:
+  - Email OTP sign-in (Supabase)
+  - Optional admin email whitelist (app.json extra.adminEmails)
+  - Export attendance and votes to CSV (web download or native share)
+
+## Get started (manual)
 
 1. Install dependencies
 
@@ -24,6 +109,50 @@ In the output, you'll find options to open the app in a
 - [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
 You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+
+### Web preview and 404 fix
+
+If your hosting preview shows “404 Not Found” (common for SPAs), use one of these:
+
+- Dev server (recommended):
+  ```bash
+  npm run web
+  ```
+  This starts the Expo web dev server with proper routing.
+
+- Static export + local preview (single page fallback enabled):
+  ```bash
+  npm run preview:web
+  ```
+  This will export to dist/ and serve it on http://localhost:5000 with a SPA fallback, avoiding 404s on deep links.
+
+### Deploy to Freehosting.com (FTP)
+
+This project includes a GitHub Actions workflow to build and deploy the static export to Freehosting via FTP, and includes an `.htaccess` SPA fallback.
+
+1) Add repository secrets (GitHub → Settings → Secrets and variables → Actions):
+   - `FTP_SERVER` (e.g., ftp.freehosting.com)
+   - `FTP_USERNAME`
+   - `FTP_PASSWORD`
+   - `FTP_PORT` (optional, default 21)
+   - `FTP_DIR` (e.g., `/public_html/` or your web root)
+   - `SUPABASE_URL` (e.g., https://asms.supabase.co)
+   - `SUPABASE_ANON_KEY`
+   - Optional branding: `BRAND_NAME`, `BRAND_PRIMARY`, `BRAND_ACCENT`, `BRAND_LOGO_URL`
+   - Optional: `ADMIN_EMAILS` (comma-separated)
+
+2) Ensure you have run Supabase SQL in your project (use scripts/supabase.sql).
+
+3) Trigger the workflow:
+   - GitHub → Actions → “Deploy to Freehosting” → Run workflow
+   - Or push to main to auto-deploy
+
+Manual FTP (alternative):
+- Build locally:
+  ```bash
+  npm run build
+  ```
+  Then upload the contents of `dist/` plus the `.htaccess` file to your Freehosting web root (e.g., public_html). The `.htaccess` enables correct SPA routing.
 
 ## Get a fresh project
 
