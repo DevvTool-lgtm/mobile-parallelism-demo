@@ -39,7 +39,7 @@
       "typedRoutes": true
     },
     "extra": {
-      "supabaseUrl": "",
+      "supabaseUrl": "https://asms.supabase.co",
       "supabaseAnonKey": "",
       "adminEmails": [],
       "brand": {
